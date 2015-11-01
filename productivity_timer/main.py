@@ -12,17 +12,17 @@ class TimerDisplay(Frame):
         self.time_show = StringVar()
         self.time_show.set("<-- Whatcha waitin' for?")
         self.timer_label = Label(self, textvariable=self.time_show)
+        self.productivity_time = Scale(self, from_=0, to=60, label="Productive Time")
+        self.break_time = Scale(self, from_=0, to=60, label="Break Time") 
         
         self.timer_on = False
         self.timer_sound = pyglet.media.load('gong.mp3', streaming=False)
         self.next_time = datetime.datetime.now()
+        self.is_break = False
         
         self.label.grid(row=0, column=0, columnspan=4)
-        self.productivity_time = IntVar()
-        Radiobutton(self, text="15 min", variable=self.productivity_time, value=15).grid(row=1, column=0)
-        Radiobutton(self, text="30 min", variable=self.productivity_time, value=30).grid(row=1, column=1)
-        Radiobutton(self, text="45 min", variable=self.productivity_time, value=45).grid(row=1, column=2)
-        Radiobutton(self, text="60 min", variable=self.productivity_time, value=60).grid(row=1, column=3)
+        self.productivity_time.grid(row=1, column=0, columnspan=2)
+        self.break_time.grid(row=1, column=2, columnspan=2)
         self.btn.grid(row=2, column=1)
         self.timer_label.grid(row=2, column=2)
         self.update_me()
@@ -35,6 +35,7 @@ class TimerDisplay(Frame):
             self.timer_on = True
             self.btn.configure(relief=SUNKEN)
             self.refresh_timer()
+            self.is_break = False
             
             
     def update_me(self):  
@@ -42,25 +43,35 @@ class TimerDisplay(Frame):
             if datetime.datetime.now() > self.next_time:
                 self.timer_sound.play()
                 self.master.focus_force()
+                self.is_break = not self.is_break
                 self.refresh_timer()
-            self.update_count_lbl()
+        self.update_count_lbl()
         self.timer_label.after(1000, self.update_me)
         
             
     def update_count_lbl(self):
-        curr_delta = self.next_time - datetime.datetime.now()
-        self.time_show.set("Time left: " + str(math.ceil(curr_delta.seconds/60)))
+        if self.timer_on:
+            if self.is_break:
+                mini_msg = "On break for: "
+            else:
+                mini_msg = "Active for: "
+            curr_delta = self.next_time - datetime.datetime.now()
+            main_msg = mini_msg + str(math.ceil(curr_delta.seconds/60)) + " more min"
+        else:
+            main_msg = "Timer off"
+        self.time_show.set(main_msg)
         
     def refresh_timer(self):
-        self.next_time = datetime.datetime.now() + datetime.timedelta(minutes=self.productivity_time.get())
-        
-        
+        if not self.is_break:
+            self.next_time = datetime.datetime.now() + datetime.timedelta(minutes=self.productivity_time.get())
+        else:
+            self.next_time = datetime.datetime.now() + datetime.timedelta(minutes=self.break_time.get())
 
 
 
-#main
-tk = Tk()
-timer_frame = TimerDisplay(tk)
-timer_frame.pack()
-tk.mainloop()
+if __name__=="__main__":
+    tk = Tk()
+    timer_frame = TimerDisplay(tk)
+    timer_frame.pack()
+    tk.mainloop()
 
