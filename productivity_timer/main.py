@@ -72,6 +72,7 @@ class TimerDisplay(Frame):
 if __name__=="__main__":
     tk = Tk()
     timer_frame = TimerDisplay(tk)
+    tk.title("Productivity Timer")
     timer_frame.pack()
     tk.mainloop()
 
